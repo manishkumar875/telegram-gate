@@ -1,0 +1,72 @@
+# Render.com blueprint.
+#
+# HOW TO USE
+#   1. Push this project to a GitHub repository (WITHOUT your .env file -
+#      .gitignore already excludes it).
+#   2. Go to https://dashboard.render.com/ > New > Blueprint.
+#   3. Connect the repository. Render reads this file.
+#   4. Render will ask for the values marked `sync: false` below. Paste your
+#      real secrets there - into Render's dashboard, never into this file.
+#
+# FREE TIER REALITY CHECK (verify current terms at render.com/pricing):
+#   * Free web services are SPUN DOWN after ~15 minutes with no HTTP traffic,
+#     and take ~1 minute to wake up again. While spun down your bot is OFFLINE
+#     and will not answer /start.
+#   * Free instance hours are capped per month across your account.
+#   * The filesystem is EPHEMERAL. Your SQLite database is wiped on every
+#     deploy and every restart. Users would have to re-confirm. That is
+#     usually acceptable for this bot, but know that it happens.
+#
+#   The spin-down is the real problem for a Telegram bot. Options:
+#     a) Ping your own /health URL every 10 minutes from a free uptime
+#        monitor (e.g. UptimeRobot). This keeps it awake but burns your
+#        free instance hours faster.
+#     b) Use a host that does not sleep (see the README's hosting table).
+#     c) Run it on a computer you already leave on.
+
+services:
+  - type: web
+    name: telegram-youtube-gate
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    healthCheckPath: /health
+    envVars:
+      # Render injects PORT automatically; the app binds it for /health.
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+      # ---- fill these in on the Render dashboard -----------------------
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_GROUP_INVITE_LINK
+        sync: false
+      - key: YOUTUBE_CHANNEL_URL
+        sync: false
+      - key: COMMUNITY_NAME
+        sync: false
+
+      # ---- optional -----------------------------------------------------
+      - key: INVITE_MODE
+        value: static
+      - key: VERIFICATION_MODE
+        value: honor
+      - key: ADMIN_USER_IDS
+        sync: false
+      - key: TELEGRAM_GROUP_ID
+        sync: false
+
+      # ---- Phase 2 only (leave unset for the free honour-system version) --
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: OAUTH_PUBLIC_BASE_URL
+        sync: false
+      - key: YOUTUBE_CHANNEL_ID
+        sync: false
+      - key: OAUTH_STATE_SECRET
+        generateValue: true

@@ -1,0 +1,20 @@
+# Runtime dependencies for the Telegram YouTube Gate bot.
+# Install with:  pip install -r requirements.txt
+
+# Telegram Bot API wrapper. [job-queue] adds the scheduler used for the
+# periodic cleanup of expired OAuth nonces.
+python-telegram-bot[job-queue]==21.9
+
+# Async SQLite driver.
+aiosqlite==0.20.0
+
+# Reads the .env file.
+python-dotenv==1.0.1
+
+# HTTP client used for the Google OAuth + YouTube Data API calls.
+# (python-telegram-bot already depends on httpx; pinned here so the version
+# we test against is the version you get.)
+httpx==0.28.1
+
+# Small web server for the Phase 2 OAuth callback and the /health endpoint.
+aiohttp==3.11.11
