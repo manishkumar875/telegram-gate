@@ -153,10 +153,17 @@ def _env_id_list(name: str) -> tuple[int, ...]:
             out.append(int(chunk))
         except ValueError as exc:
             raise ConfigError(
-                f"{name} must be numeric Telegram user IDs separated by commas "
-                f"(for example: 111111111,222222222). {chunk!r} is not a number."
+                f"{name} must be numeric Telegram IDs separated by commas "
+                f"(for example: -1001234, -1005678). {chunk!r} is not a number."
             ) from exc
     return tuple(out)
+
+
+def _env_str_list(name: str) -> tuple[str, ...]:
+    raw = _env(name)
+    if not raw:
+        return ()
+    return tuple(chunk.strip() for chunk in raw.replace(";", ",").split(",") if chunk.strip())
 
 
 def _require_https(name: str, value: str) -> str:
@@ -218,8 +225,8 @@ class Settings:
     # --- Telegram -------------------------------------------------------
     bot_token: str
     api_base_url: str
-    group_invite_link: str
-    group_chat_id: int | None
+    group_invite_links: tuple[str, ...]
+    group_chat_ids: tuple[int, ...]
     invite_mode: InviteMode
     admin_user_ids: tuple[int, ...]
 
@@ -289,8 +296,8 @@ class Settings:
 
         return {
             "bot_token": mask(self.bot_token),
-            "group_invite_link": self.group_invite_link or "<not set>",
-            "group_chat_id": self.group_chat_id,
+            "group_invite_links": list(self.group_invite_links) if self.group_invite_links else "<not set>",
+            "group_chat_ids": list(self.group_chat_ids) if self.group_chat_ids else "<not set>",
             "invite_mode": self.invite_mode.value,
             "verification_mode": self.verification_mode.value,
             "youtube_channel_url": self.youtube_channel_url,
@@ -348,38 +355,34 @@ def load_settings(
         invite_mode = InviteMode.STATIC
 
     # ---- Group invite link / group id ----------------------------------
-    group_invite_link = _env("TELEGRAM_GROUP_INVITE_LINK")
-    if group_invite_link and not re.match(
-        r"^https://t\.me/(\+|joinchat/|[A-Za-z0-9_]{4,})", group_invite_link
-    ):
-        errors.append(
-            "TELEGRAM_GROUP_INVITE_LINK must be a t.me link, for example "
-            "https://t.me/+AbCdEf123456 or https://t.me/yourpublicgroup. "
-            "Get it from your group: Group name > Invite Links."
-        )
-
-    group_chat_id_raw = _env("TELEGRAM_GROUP_ID")
-    group_chat_id: int | None = None
-    if group_chat_id_raw:
-        try:
-            group_chat_id = int(group_chat_id_raw)
-        except ValueError:
+    group_invite_links = _env_str_list("TELEGRAM_GROUP_INVITE_LINK")
+    for link in group_invite_links:
+        if not re.match(r"^https://t\.me/(\+|joinchat/|[A-Za-z0-9_]{4,})", link):
             errors.append(
-                "TELEGRAM_GROUP_ID must be a number like -1001234567890 "
-                f"(you wrote {group_chat_id_raw!r}). Run "
-                "`python -m src.tools.find_group_id` to discover it."
+                f"TELEGRAM_GROUP_INVITE_LINK must be t.me links, for example "
+                f"https://t.me/+AbCdEf123456. {link!r} is invalid. "
+                "Get it from your group: Group name > Invite Links."
             )
 
-    if invite_mode is InviteMode.STATIC and not group_invite_link:
+    try:
+        group_chat_ids = _env_id_list("TELEGRAM_GROUP_ID")
+    except ConfigError as exc:
+        errors.append(
+            "TELEGRAM_GROUP_ID must be a comma-separated list of numbers like -1001234567890. "
+            "Run `python -m src.tools.find_group_id` to discover them."
+        )
+        group_chat_ids = ()
+
+    if invite_mode is InviteMode.STATIC and not group_invite_links:
         errors.append(
             "TELEGRAM_GROUP_INVITE_LINK is empty. With INVITE_MODE=static the "
-            "bot needs a ready-made invite link to your existing group."
+            "bot needs ready-made invite links to your existing groups."
         )
-    if invite_mode in {InviteMode.UNIQUE, InviteMode.REQUEST} and group_chat_id is None:
+    if invite_mode in {InviteMode.UNIQUE, InviteMode.REQUEST} and not group_chat_ids:
         errors.append(
-            f"INVITE_MODE={invite_mode.value} needs TELEGRAM_GROUP_ID (a number "
-            "like -1001234567890) so the bot can manage invites for your group. "
-            "Run `python -m src.tools.find_group_id` to discover it."
+            f"INVITE_MODE={invite_mode.value} needs TELEGRAM_GROUP_ID (numbers "
+            "like -1001234567890) so the bot can manage invites for your groups. "
+            "Run `python -m src.tools.find_group_id` to discover them."
         )
 
     # ---- YouTube -------------------------------------------------------
@@ -518,8 +521,8 @@ def load_settings(
     return Settings(
         bot_token=bot_token,
         api_base_url=_env("TELEGRAM_API_BASE_URL", "https://api.telegram.org/bot"),
-        group_invite_link=group_invite_link,
-        group_chat_id=group_chat_id,
+        group_invite_links=group_invite_links,
+        group_chat_ids=group_chat_ids,
         invite_mode=invite_mode,
         admin_user_ids=admin_user_ids,
         youtube_channel_url=youtube_channel_url,

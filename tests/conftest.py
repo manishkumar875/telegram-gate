@@ -32,8 +32,8 @@ def make_settings(tmp_path: Path, **overrides: Any) -> Settings:
     base: dict[str, Any] = dict(
         bot_token=VALID_TOKEN,
         api_base_url="https://api.telegram.org/bot",
-        group_invite_link="https://t.me/+TestInviteLink123",
-        group_chat_id=None,
+        group_invite_links=("https://t.me/+TestInviteLink123",),
+        group_chat_ids=(),
         invite_mode=InviteMode.STATIC,
         admin_user_ids=(999,),
         youtube_channel_url="https://www.youtube.com/@testchannel",

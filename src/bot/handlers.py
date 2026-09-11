@@ -455,7 +455,7 @@ class GateHandlers:
             return
 
         invite = await self.invites.get_invite(bot, user_id)
-        if not invite.ok or not invite.link:
+        if not invite.ok or not invite.links:
             message = (
                 copy.NO_LINK_CONFIGURED
                 if invite.error == "no_link_configured"
@@ -465,7 +465,7 @@ class GateHandlers:
             await self._edit_or_send(update, message, restart_keyboard())
             return
 
-        await self.db.mark_invite_sent(user_id, invite.link)
+        await self.db.mark_invite_sent(user_id, ",".join(invite.links))
 
         if already_verified:
             text = copy.ALREADY_VERIFIED
@@ -476,7 +476,7 @@ class GateHandlers:
         else:
             text = copy.SUCCESS
 
-        await self._edit_or_send(update, text, join_keyboard(invite.link))
+        await self._edit_or_send(update, text, join_keyboard(invite.links))
 
     async def notify_verified(self, bot, user_id: int) -> None:
         """Push a message to the user after an out-of-band (OAuth) success.
@@ -499,10 +499,10 @@ class GateHandlers:
             return
 
         invite = await self.invites.get_invite(bot, user_id)
-        if not invite.ok or not invite.link:
+        if not invite.ok or not invite.links:
             await bot.send_message(chat_id=user_id, text=copy.INVITE_FAILED)
             return
-        await self.db.mark_invite_sent(user_id, invite.link)
+        await self.db.mark_invite_sent(user_id, ",".join(invite.links))
 
         if invite.is_join_request:
             text = copy.SUCCESS_JOIN_REQUEST
@@ -514,7 +514,7 @@ class GateHandlers:
             await bot.send_message(
                 chat_id=user_id,
                 text=text,
-                reply_markup=join_keyboard(invite.link),
+                reply_markup=join_keyboard(invite.links),
                 parse_mode=ParseMode.HTML,
                 disable_web_page_preview=True,
             )
@@ -550,18 +550,18 @@ class GateHandlers:
             return
         user_id = request.from_user.id
 
-        # Only ever act on join requests for the one group we are configured
-        # for. Without a configured group id we cannot verify which chat this
+        # Only ever act on join requests for the groups we are configured
+        # for. Without configured group ids we cannot verify which chat this
         # is, so we do nothing rather than approve someone into a chat the
         # owner never told us about.
-        if self.settings.group_chat_id is None:
+        if not self.settings.group_chat_ids:
             logger.info(
                 "Ignoring a join request from chat %s: TELEGRAM_GROUP_ID is not set, "
                 "so this bot cannot confirm which group it should be gating.",
                 request.chat.id,
             )
             return
-        if request.chat.id != self.settings.group_chat_id:
+        if request.chat.id not in self.settings.group_chat_ids:
             logger.info("Ignoring join request for an unrelated chat %s", request.chat.id)
             return
 

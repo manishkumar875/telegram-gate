@@ -261,7 +261,7 @@ async def test_zero_wait_is_the_default(gate):
 
 async def test_unique_mode_creates_a_single_use_link(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_ids=(-1001234567890,)
     )
     gate = build_gate(settings, db, recorder, fake_bot)
 
@@ -277,7 +277,7 @@ async def test_unique_mode_creates_a_single_use_link(tmp_path, db, recorder, fak
 
 async def test_unique_link_is_reused_not_regenerated(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_ids=(-1001234567890,)
     )
     gate = build_gate(settings, db, recorder, fake_bot)
 
@@ -291,7 +291,7 @@ async def test_unique_link_is_reused_not_regenerated(tmp_path, db, recorder, fak
 
 async def test_request_mode_uses_a_join_request_link(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     gate = build_gate(settings, db, recorder, fake_bot)
 
@@ -305,7 +305,7 @@ async def test_request_mode_uses_a_join_request_link(tmp_path, db, recorder, fak
 
 async def test_request_link_is_cached_across_users(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     for user_id in (1, 2, 3):
         gate = build_gate(settings, db, recorder, fake_bot, user_id=user_id)
@@ -318,7 +318,7 @@ async def test_request_link_is_cached_across_users(tmp_path, db, recorder, fake_
 
 async def test_verified_join_request_is_approved(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     gate = build_gate(settings, db, recorder, fake_bot)
 
@@ -333,7 +333,7 @@ async def test_verified_join_request_is_approved(tmp_path, db, recorder, fake_bo
 
 async def test_unverified_join_request_is_left_pending(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     gate = build_gate(settings, db, recorder, fake_bot)
 
@@ -345,7 +345,7 @@ async def test_unverified_join_request_is_left_pending(tmp_path, db, recorder, f
 
 async def test_join_request_for_another_chat_is_ignored(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     gate = build_gate(settings, db, recorder, fake_bot)
     await gate.send_command("start")
@@ -360,7 +360,7 @@ async def test_join_request_for_another_chat_is_ignored(tmp_path, db, recorder, 
 
 async def test_invite_failure_falls_back_to_static_link(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_ids=(-1001234567890,)
     )
     fake_bot.fail_create_link = True
     gate = build_gate(settings, db, recorder, fake_bot)
@@ -378,8 +378,8 @@ async def test_invite_failure_without_fallback_shows_a_clear_error(
     settings = make_settings(
         tmp_path,
         invite_mode=InviteMode.UNIQUE,
-        group_chat_id=-1001234567890,
-        group_invite_link="",
+        group_chat_ids=(-1001234567890,),
+        group_invite_links=(),
     )
     fake_bot.fail_create_link = True
     gate = build_gate(settings, db, recorder, fake_bot)

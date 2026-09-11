@@ -166,7 +166,7 @@ async def test_no_web_server_when_not_needed(tmp_path):
 async def test_post_init_warns_but_continues_on_bad_group_permissions(tmp_path, caplog):
     """A misconfigured group must not stop the bot from booting."""
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     bot = GateBot(settings)
     bot.build()
@@ -255,7 +255,7 @@ async def test_permission_check_passes_for_admin_with_invite_rights(tmp_path, fa
     from src.bot.invites import check_group_permissions
 
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     assert await check_group_permissions(fake_bot, settings) == []
 
@@ -266,7 +266,7 @@ async def test_permission_check_flags_non_admin(tmp_path, fake_bot):
 
     fake_bot.member = FakeChatMember(status="member", can_invite_users=False)
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     problems = await check_group_permissions(fake_bot, settings)
     assert len(problems) == 1
@@ -279,7 +279,7 @@ async def test_permission_check_flags_missing_invite_right(tmp_path, fake_bot):
 
     fake_bot.member = FakeChatMember(status="administrator", can_invite_users=False)
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.UNIQUE, group_chat_ids=(-1001234567890,)
     )
     problems = await check_group_permissions(fake_bot, settings)
     assert "Invite Users via Link" in problems[0]
@@ -303,7 +303,7 @@ async def test_permission_check_survives_an_unparseable_response(tmp_path, fake_
 
     fake_bot.get_chat_member = unparseable  # type: ignore[method-assign]
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
 
     problems = await check_group_permissions(fake_bot, settings)
@@ -315,7 +315,7 @@ async def test_permission_check_survives_an_unparseable_response(tmp_path, fake_
 async def test_post_init_still_boots_when_permission_check_explodes(tmp_path):
     """The bot must come up even if the group check throws."""
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     bot = GateBot(settings)
     bot.build()
@@ -351,7 +351,7 @@ async def test_permission_check_reports_bot_not_in_group(tmp_path, fake_bot):
 
     fake_bot.get_chat_member = forbidden  # type: ignore[method-assign]
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     problems = await check_group_permissions(fake_bot, settings)
     assert "not a member of the group" in problems[0]

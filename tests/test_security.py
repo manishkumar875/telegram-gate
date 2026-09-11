@@ -227,7 +227,7 @@ async def test_community_name_is_html_escaped(tmp_path, db, recorder, fake_bot):
 
 async def test_join_request_ignored_without_a_configured_group(tmp_path, db, recorder, fake_bot):
     """Never approve someone into a chat we were not told to gate."""
-    settings = make_settings(tmp_path, group_chat_id=None)
+    settings = make_settings(tmp_path, group_chat_ids=())
     gate = build_gate(settings, db, recorder, fake_bot)
     await db.touch_user(gate.user.id)
     await db.mark_confirmed(gate.user.id, "honor")
@@ -240,14 +240,14 @@ async def test_join_request_ignored_without_a_configured_group(tmp_path, db, rec
 async def test_approve_refuses_without_a_group_id(tmp_path, db, fake_bot):
     from src.bot.invites import InviteService
 
-    service = InviteService(make_settings(tmp_path, group_chat_id=None), db)
+    service = InviteService(make_settings(tmp_path, group_chat_ids=()), db)
     assert await service.approve_join_request(fake_bot, 1) is False
     assert fake_bot.approved == []
 
 
 async def test_unverified_user_is_never_approved(tmp_path, db, recorder, fake_bot):
     settings = make_settings(
-        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_id=-1001234567890
+        tmp_path, invite_mode=InviteMode.REQUEST, group_chat_ids=(-1001234567890,)
     )
     gate = build_gate(settings, db, recorder, fake_bot)
     await gate.send_command("start")

@@ -65,11 +65,20 @@ def confirm_keyboard(subscribe_url: str) -> InlineKeyboardMarkup:
     )
 
 
-def join_keyboard(group_link: str) -> InlineKeyboardMarkup:
-    """The payoff button."""
-    return InlineKeyboardMarkup(
-        [[InlineKeyboardButton(copy.BTN_JOIN_GROUP, url=group_link)]]
-    )
+def join_keyboard(group_links: tuple[str, ...]) -> InlineKeyboardMarkup:
+    """The payoff button(s)."""
+    if not group_links:
+        return InlineKeyboardMarkup([])
+        
+    if len(group_links) == 1:
+        return InlineKeyboardMarkup(
+            [[InlineKeyboardButton(copy.BTN_JOIN_GROUP, url=group_links[0])]]
+        )
+
+    rows = []
+    for i, link in enumerate(group_links, start=1):
+        rows.append([InlineKeyboardButton(f"{copy.BTN_JOIN_GROUP} {i}", url=link)])
+    return InlineKeyboardMarkup(rows)
 
 
 def oauth_keyboard(auth_url: str) -> InlineKeyboardMarkup:

@@ -144,7 +144,7 @@ def test_request_mode_requires_group_id(monkeypatch):
 def test_request_mode_with_group_id_is_accepted(monkeypatch):
     settings = load(monkeypatch, INVITE_MODE="request", TELEGRAM_GROUP_ID="-1001234567890")
     assert settings.invite_mode is InviteMode.REQUEST
-    assert settings.group_chat_id == -1001234567890
+    assert settings.group_chat_ids[0] == -1001234567890
     assert settings.needs_group_admin is True
 
 
